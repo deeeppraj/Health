@@ -9,5 +9,7 @@ seaborn
 scikit-learn
 plotly
 opencv-python
+openvino
+openvino-dev
+pillow
 tensorflow
-keras
