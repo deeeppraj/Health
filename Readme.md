@@ -3,6 +3,12 @@
 An intelligent, modular, and NDHM-compliant healthcare kiosk designed to bridge the urban-rural health gap in India. This system integrates deep learning diagnostics, electronic health records (EHR), teleconsultation, and multilingual voice assistance—all built on a secure Intel-based stack.
 
 ---
+## 📄 Technical Report
+
+📘 **[Comprehensive Technical Report on the AI-Powered Healthcare Kiosk](./ITR%20report%20INTEL%20Final.pdf)**
+
+Authored by *Deepraj Bhattacharjee*, this report details the problem statement, system architecture, CNN model performance, deployment strategy, and go-to-market blueprint.  
+Includes:
 
 ## 🚀 Key Features
 
