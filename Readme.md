@@ -6,6 +6,9 @@ An intelligent, modular, and NDHM-compliant healthcare kiosk designed to bridge 
 ## 📄 Technical Report
 
 📘 **[Comprehensive Technical Report on the AI-Powered Healthcare Kiosk](./ITR%20report%20INTEL%20Final.pdf)**
+
+
+
 Link to Google Drive: https://drive.google.com/file/d/1KD8Q3KpTgLaSnre-9G8SWRdHV66IZT5A/view?usp=drive_link
 
 Authored by *Deepraj Bhattacharjee*, this report details the problem statement, system architecture, CNN model performance, deployment strategy, and go-to-market blueprint.  
