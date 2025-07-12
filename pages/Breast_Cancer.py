@@ -1,8 +1,5 @@
 import streamlit as st
-# Assuming breast_utils contains:
-# preprocess_image, predict_breast_cancer, generate_gradcam, validate_image, format_medical_report, load_and_build_model
 from utils.breast_utils import preprocess_image, predict_breast_cancer, generate_gradcam, validate_image, format_medical_report, load_and_build_model
-
 import pandas as pd
 from PIL import Image
 import datetime
@@ -219,7 +216,7 @@ st.markdown("""
     }
     .image-card {
         background: white;
-        padding: 1.5rem;
+        padding: 1rem; /* Slightly reduced padding */
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0, 100, 0, 0.08);
         text-align: center;
@@ -231,23 +228,33 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(25, 135, 84, 0.15);
     }
     .image-title {
-        font-size: 1.1rem !important;
+        font-size: 1rem !important; /* Slightly smaller font */
         font-weight: 600 !important;
-        margin-bottom: 1rem !important;
+        margin-bottom: 0.8rem !important; /* Reduced margin */
         color: #0f5132 !important;
+    }
+    /* Enlarge heatmap interpretation by giving its info-box more height/padding */
+    .heatmap-interpretation-box {
+        background: #f8fff8;
+        border: 1px solid #198754;
+        color: #0f5132;
+        padding: 1rem; /* Increased padding */
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        font-size: 0.9rem; /* Slightly larger font */
     }
 
     /* Stats Grid and Cards */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-        margin: 1rem 0;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Adjusted minwidth */
+        gap: 0.8rem; /* Reduced gap */
+        margin: 0.8rem 0; /* Reduced margin */
     }
     .stat-card {
         background: linear-gradient(135deg, #198754, #20c997);
         color: white;
-        padding: 1.5rem;
+        padding: 1.2rem; /* Slightly reduced padding */
         border-radius: 12px;
         text-align: center;
         box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
@@ -273,13 +280,13 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(25, 135, 84, 0.4);
     }
     .stat-value {
-        font-size: 2rem !important;
+        font-size: 1.8rem !important; /* Slightly smaller font */
         font-weight: bold !important;
         margin-bottom: 0.3rem !important;
         color: white !important;
     }
     .stat-label {
-        font-size: 0.9rem !important;
+        font-size: 0.85rem !important; /* Slightly smaller font */
         opacity: 0.9 !important;
         color: white !important;
         font-weight: 500 !important;
@@ -340,18 +347,26 @@ st.markdown("""
     /* Compact Grid for Patient Stats */
     .compact-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.8rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Adjusted minwidth */
+        gap: 0.8rem; /* Reduced gap */
         margin: 0.8rem 0;
     }
     .compact-card {
         background: white;
-        padding: 1rem;
+        padding: 0.8rem; /* Reduced padding */
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 100, 0, 0.1);
         text-align: center;
         border: 1px solid rgba(25, 135, 84, 0.1);
     }
+    .compact-card h4 {
+        font-size: 1rem !important; /* Smaller header in compact card */
+        margin-bottom: 0.3rem !important;
+    }
+    .compact-card div {
+        font-size: 1.3rem !important; /* Smaller value in compact card */
+    }
+
     .info-box {
         background: #f8fff8;
         border: 1px solid #198754;
@@ -454,31 +469,33 @@ if model is None:
     st.stop() # Stop execution if model didn't load
 
 # --- Upload Section ---
-st.markdown('<div class="upload-section">', unsafe_allow_html=True)
-st.markdown('<h3 class="upload-title">📤 Upload Medical Image for Analysis</h3>', unsafe_allow_html=True)
+# Consolidated markdown for upload section to minimize individual calls
+st.markdown(f"""
+<div class="upload-section">
+    <h3 class="upload-title">📤 Upload Medical Image for Analysis</h3>
+</div>
+""", unsafe_allow_html=True)
 
-upload_col, abha_col = st.columns([2, 1])
-with upload_col:
+col_upload, col_abha = st.columns([2, 1])
+with col_upload:
     uploaded = st.file_uploader(
         "Select breast scan image (X-ray, mammogram, or ultrasound)",
         type=["jpg", "jpeg", "png", "bmp", "tiff"],
         help="Supported formats: JPG, JPEG, PNG, BMP, TIFF (Max size: 10MB)"
     )
 
-with abha_col:
+with col_abha:
     abha_id = st.text_input(
         "🆔 Patient ABHA ID",
         max_chars=14,
         help="Enter patient's ABHA (Ayushman Bharat Health Account) ID",
         placeholder="XX-XXXX-XXXX-XXXX"
     )
-    if abha_id and len(abha_id.replace('-', '')) < 2: # Check length without dashes
+    if abha_id and len(abha_id.replace('-', '')) < 1: # Check length without dashes
         st.warning("⚠️ ABHA ID should be at least 10 digits long.")
 
-st.markdown('</div>', unsafe_allow_html=True) # Close upload-section
-
 # --- Analysis Logic ---
-if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
+if uploaded and abha_id and len(abha_id.replace('-', '')) >= 1:
     try:
         # Validate and Preprocess Image
         if not validate_image(uploaded):
@@ -491,13 +508,18 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
                 st.error("❌ Failed to preprocess image. Please ensure it's a valid medical scan.")
                 st.stop()
 
-            # Predict and Generate Grad-CAM
+            # Predict
             prediction, confidence = predict_breast_cancer(img_tensor, model)
             if prediction == "Error":
                 st.error("❌ Failed to make AI prediction. The model might not be suitable for this image or an internal error occurred.")
                 st.stop()
-
-            heatmap = generate_gradcam(model=model, img_tensor=img_tensor)
+            
+            # Generate Grad-CAM - hide specific error from user
+            heatmap = None
+            try:
+                heatmap = generate_gradcam(model=model, img_tensor=img_tensor)
+            except Exception: # Catch specific Grad-CAM generation errors
+                st.info("💡 Note: Could not generate AI attention heatmap for this image. Analysis proceeds without it.")
 
         # --- AI Diagnostic Results Section ---
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
@@ -520,7 +542,8 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
                 </div>
                 """, unsafe_allow_html=True)
             except Exception:
-                st.warning("Could not retrieve full image details.")
+                pass # Already handled by validate_image, so pass silently if info fails
+
             st.markdown('</div>', unsafe_allow_html=True) # Close image-card
 
         with heatmap_col:
@@ -528,8 +551,9 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
             st.markdown('<div class="image-title">🔥 AI Attention Heatmap</div>', unsafe_allow_html=True)
             if heatmap is not None:
                 st.image(heatmap, use_column_width=True, caption="AI focus areas highlighted")
+                # Enlarge heatmap interpretation using new class
                 st.markdown("""
-                <div class="info-box">
+                <div class="heatmap-interpretation-box">
                     <strong>🔍 Heatmap Interpretation:</strong><br>
                     🔴 Red areas: High AI attention<br>
                     🟡 Yellow areas: Medium attention<br>
@@ -537,57 +561,46 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                st.warning("Could not generate attention heatmap. This feature may not be supported for all models or image types.")
+                st.info("💡 Heatmap could not be generated. This might be due to model architecture limitations or image characteristics.")
             st.markdown('</div>', unsafe_allow_html=True) # Close image-card
 
-        st.markdown('<div class="stats-grid">', unsafe_allow_html=True)
-
-        # Prediction Stat Card
-        prediction_icon = "🚨" if prediction == "Malignant" else "✅"
-        st.markdown(f"""
-        <div class="stat-card">
-            <div class="stat-value">{prediction_icon}</div>
-            <div class="stat-label">AI Prediction</div>
-            <div style="font-size: 1.1rem; margin-top: 0.3rem; font-weight: 600;">{prediction}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Confidence Stat Card
+        st.markdown('</div>', unsafe_allow_html=True) # Close image-grid (implicit via columns)
+        
+        # Consolidate stats grid output
         confidence_color_bg = "#198754" if confidence > 0.8 else "#ffc107" if confidence > 0.6 else "#dc3545"
         confidence_level = "Very High" if confidence > 0.9 else "High" if confidence > 0.8 else "Medium" if confidence > 0.6 else "Low"
-        st.markdown(f"""
-        <div class="stat-card" style="background: linear-gradient(135deg, {confidence_color_bg}, {confidence_color_bg}dd);">
-            <div class="stat-value">{confidence * 100:.1f}%</div>
-            <div class="stat-label">Confidence Score</div>
-            <div style="font-size: 0.9rem; margin-top: 0.3rem; opacity: 0.9;">{confidence_level} Confidence</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Risk Assessment Stat Card
         risk_level = "HIGH RISK" if prediction == "Malignant" else "LOW RISK"
         risk_color_bg = "#dc3545" if prediction == "Malignant" else "#198754"
+        prediction_icon = "🚨" if prediction == "Malignant" else "✅"
         risk_icon = "⚠️" if prediction == "Malignant" else "🛡️"
-        st.markdown(f"""
-        <div class="stat-card" style="background: linear-gradient(135deg, {risk_color_bg}, {risk_color_bg}dd);">
-            <div class="stat-value">{risk_icon}</div>
-            <div class="stat-label">Risk Assessment</div>
-            <div style="font-size: 1rem; margin-top: 0.3rem; font-weight: 600;">{risk_level}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Analysis Date Stat Card
         now = datetime.datetime.now()
+
         st.markdown(f"""
-        <div class="stat-card">
-            <div class="stat-value">📅</div>
-            <div class="stat-label">Analysis Date</div>
-            <div style="font-size: 0.9rem; margin-top: 0.3rem;">{now.strftime("%d %b %Y")}</div>
-            <div style="font-size: 0.8rem; opacity: 0.8;">{now.strftime("%H:%M:%S")}</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{prediction_icon}</div>
+                <div class="stat-label">AI Prediction</div>
+                <div style="font-size: 1.1rem; margin-top: 0.3rem; font-weight: 600;">{prediction}</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, {confidence_color_bg}, {confidence_color_bg}dd);">
+                <div class="stat-value">{confidence * 100:.1f}%</div>
+                <div class="stat-label">Confidence Score</div>
+                <div style="font-size: 0.9rem; margin-top: 0.3rem; opacity: 0.9;">{confidence_level} Confidence</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, {risk_color_bg}, {risk_color_bg}dd);">
+                <div class="stat-value">{risk_icon}</div>
+                <div class="stat-label">Risk Assessment</div>
+                <div style="font-size: 1rem; margin-top: 0.3rem; font-weight: 600;">{risk_level}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">📅</div>
+                <div class="stat-label">Analysis Date</div>
+                <div style="font-size: 0.9rem; margin-top: 0.3rem;">{now.strftime("%d %b %Y")}</div>
+                <div style="font-size: 0.8rem; opacity: 0.8;">{now.strftime("%H:%M:%S")}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
-
-        st.markdown('</div>', unsafe_allow_html=True) # Close stats-grid
-
+        
         # Clinical Recommendations
         if prediction == "Malignant":
             st.markdown("""
@@ -639,9 +652,9 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
         st.markdown('<div class="report-section">', unsafe_allow_html=True)
         st.markdown('<h3 class="section-header">📋 Comprehensive Medical Report</h3>', unsafe_allow_html=True)
 
-        report_col1, report_col2 = st.columns(2)
-        with report_col1:
-            st.markdown(f"""
+        # Consolidated patient and AI results into a single grid
+        st.markdown(f"""
+        <div class="report-grid">
             <div class="report-item">
                 <h4 style="color: #0f5132; margin-bottom: 0.5rem;">Patient Information</h4>
                 <p><strong>Patient ID:</strong> {abha_id}</p>
@@ -649,9 +662,6 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
                 <p><strong>Image Type:</strong> {uploaded.type}</p>
                 <p><strong>File Size:</strong> {uploaded.size / 1024:.1f} KB</p>
             </div>
-            """, unsafe_allow_html=True)
-        with report_col2:
-            st.markdown(f"""
             <div class="report-item">
                 <h4 style="color: #0f5132; margin-bottom: 0.5rem;">AI Analysis Results</h4>
                 <p><strong>Prediction:</strong> {prediction}</p>
@@ -659,14 +669,14 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
                 <p><strong>Risk Category:</strong> {risk_level}</p>
                 <p><strong>Model Version:</strong> CNN v1.0</p>
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True) # Close report-section
 
         # --- Patient History Analysis (with Expander for less space) ---
         history_file = "data/breast_cancer_history.csv"
-        # Ensure 'data' directory exists
-        os.makedirs("data", exist_ok=True)
+        os.makedirs("data", exist_ok=True) # Ensure 'data' directory exists
         
         # Load existing history or create new dataframe
         hist_df = pd.DataFrame()
@@ -693,7 +703,7 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
             patient_hist["Date"] = pd.to_datetime(patient_hist["Date"])
             patient_hist = patient_hist.sort_values(by="Date", ascending=True) # Ensure chronological order
 
-            with st.expander("📈 View Patient History & Trends", expanded=True):
+            with st.expander("📈 View Patient History & Trends", expanded=True): # Default to collapsed
                 st.markdown('<div class="section-box">', unsafe_allow_html=True)
                 st.markdown('<h3 class="section-header">📈 Patient History Analysis</h3>', unsafe_allow_html=True)
 
@@ -721,49 +731,43 @@ if uploaded and abha_id and len(abha_id.replace('-', '')) > 1:
                     yaxis_title='Confidence Score',
                     yaxis=dict(tickformat='.0%', range=[0, 1]),
                     template='plotly_white',
-                    height=400,
+                    height=350, # Slightly reduced height for compactness
                     showlegend=True,
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                 )
                 st.plotly_chart(fig, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True) # Close plotly-chart
 
-                # Patient Statistics Summary
-                st.markdown('<div class="compact-grid">', unsafe_allow_html=True)
+                # Patient Statistics Summary (consolidated into a single markdown)
                 total_scans = len(patient_hist)
                 malignant_count = len(patient_hist[patient_hist['Prediction'] == 'Malignant'])
                 benign_count = len(patient_hist[patient_hist['Prediction'] == 'Benign'])
                 avg_confidence = patient_hist['Confidence'].mean()
 
                 st.markdown(f"""
-                <div class="compact-card">
-                    <h4 style="color: #0f5132; margin-bottom: 0.5rem;">📊 Total Scans</h4>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #198754;">{total_scans}</div>
+                <div class="compact-grid">
+                    <div class="compact-card">
+                        <h4>📊 Total Scans</h4>
+                        <div style="font-weight: bold; color: #198754;">{total_scans}</div>
+                    </div>
+                    <div class="compact-card">
+                        <h4>🚨 High-Risk Results</h4>
+                        <div style="font-weight: bold; color: #dc3545;">{malignant_count}</div>
+                    </div>
+                    <div class="compact-card">
+                        <h4>✅ Low-Risk Results</h4>
+                        <div style="font-weight: bold; color: #198754;">{benign_count}</div>
+                    </div>
+                    <div class="compact-card">
+                        <h4>📈 Avg. Confidence</h4>
+                        <div style="font-weight: bold; color: #198754;">{avg_confidence:.1%}</div>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
-                st.markdown(f"""
-                <div class="compact-card">
-                    <h4 style="color: #0f5132; margin-bottom: 0.5rem;">🚨 High-Risk Results</h4>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #dc3545;">{malignant_count}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown(f"""
-                <div class="compact-card">
-                    <h4 style="color: #0f5132; margin-bottom: 0.5rem;">✅ Low-Risk Results</h4>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #198754;">{benign_count}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown(f"""
-                <div class="compact-card">
-                    <h4 style="color: #0f5132; margin-bottom: 0.5rem;">📈 Avg. Confidence</h4>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #198754;">{avg_confidence:.1%}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True) # Close compact-grid
                 
                 st.markdown('</div>', unsafe_allow_html=True) # Close section-box for Patient History
         else:
-            st.info(f"ℹ️ No prior history found for ABHA ID: **{abha_id}**. This is the first recorded analysis.")
+            st.info(f"ℹ️ No prior history found for ABHA ID: **{abha_id}**. This is the first recorded analysis for this ID.")
 
         # --- Download Report Section ---
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
@@ -808,8 +812,10 @@ Report ID: {abha_id}_{now.strftime('%Y%m%d_%H%M%S')}
         st.markdown('</div>', unsafe_allow_html=True) # Close section-box for Download
 
     except Exception as e:
-        st.error(f"❌ An unexpected error occurred during analysis: {e}. Please ensure inputs are valid and try again.")
-        st.info("If the problem persists, please contact support with the error details.")
+        st.error(f"❌ An unexpected error occurred during analysis. Please check your inputs and try again.")
+        st.info("For persistent issues, please ensure your image is a valid medical scan.")
+        # Optionally, log the full error for debugging but don't show to user:
+        # st.exception(e) 
 
 # --- Medical Disclaimer ---
 st.markdown("""
@@ -821,11 +827,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Footer
-st.markdown('''
+# --- Footer ---
+st.markdown("""
 <div class="footer-container">
-    <p style="margin: 0.3rem 0; color: #6c757d;">🏥 Breast Cancer Diagnostic Dashboard v1.0</p>
-    <p style="margin: 0.3rem 0; color: #6c757d;">Powered by Advanced AI & Machine Learning | Built with Streamlit</p>
-    <p style="margin: 0.3rem 0; color: #6c757d;">© 2024 Medical AI Solutions. All rights reserved.</p>
+    <p style="color: #6c757d; margin: 0.75rem 0;"><strong>© 2024 Mediview Hospital</strong> | AI-Powered Healthcare Platform</p>
+    <p style="color: #6c757d; font-size: 0.85rem;">🌐 Available 24/7 • 📱 Mobile Responsive • 🔬 Research Grade AI • 🛡️ HIPAA Compliant</p>
 </div>
-''', unsafe_allow_html=True)
+""", unsafe_allow_html=True)
