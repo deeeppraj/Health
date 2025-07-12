@@ -1,0 +1,13 @@
+streamlit
+transformers
+sentencepiece
+torch
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+plotly
+opencv-python
+tensorflow
+keras
